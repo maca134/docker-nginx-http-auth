@@ -1,0 +1,23 @@
+#!/usr/bin/with-contenv bash
+
+HTPASSWD_FILE="/etc/nginx/.htpasswd"
+USER_FILE="/config/conf/users.conf"
+
+function update_htpasswd {
+    [ -f $HTPASSWD_FILE ] && rm $HTPASSWD_FILE
+    touch $HTPASSWD_FILE
+    while IFS= read -r LINE; do
+        IFS=':' read -a PART <<< "$LINE"
+        htpasswd -b "$HTPASSWD_FILE" "${PART[0]}" "${PART[1]}"
+    done < "$USER_FILE"
+    chown abc:abc $HTPASSWD_FILE
+    chmod 644 $HTPASSWD_FILE
+}
+
+function wait_for_changes {
+    inotifywait -rq --event modify,move,create,delete ${USER_FILE}
+}
+
+update_htpasswd
+
+while wait_for_changes; do update_htpasswd; done

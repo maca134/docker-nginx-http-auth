@@ -1,0 +1,21 @@
+#!/usr/bin/with-contenv bash
+
+WATCH_FILES=( \
+    /config/conf/nginx.conf \
+    /config/conf/sites.conf \
+)
+
+function wait_for_changes {
+    inotifywait -rq \
+        --event modify,move,create,delete \
+        ${WATCH_FILES}
+}
+
+while wait_for_changes; do
+    if /usr/sbin/nginx -c /config/conf/nginx.conf -t; then
+        echo "Changes to nginx config detected and the changes are valid, reloading nginx"
+        /usr/sbin/nginx -c /config/conf/nginx.conf -s reload
+    else
+        echo "Changes to nginx config detected but the changes are not valid, skipping nginx reload. Please fix your config."
+    fi  
+done

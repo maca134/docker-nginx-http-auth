@@ -1,0 +1,38 @@
+#!/usr/bin/with-contenv bash
+
+# make our folders
+mkdir -p \
+    /config/{conf,www,log,keys} \
+    /run \
+    /var/lib/nginx/tmp/client_body \
+    /var/tmp/nginx
+
+# copy config files
+[[ ! -f /config/conf/nginx.conf ]] && \
+    cp /defaults/nginx.conf /config/conf/nginx.conf
+[[ ! -f /config/conf/users.conf ]] && \
+    cp /defaults/users.conf /config/conf/users.conf
+[[ ! -f /config/conf/sites.conf ]] && \
+    cp /defaults/sites.conf /config/conf/sites.conf
+[[ $(find /config/www -type f | wc -l) -eq 0 ]] && \
+    cp /defaults/index.html /config/www/index.html
+
+# backwards compatibility for alpine >=3.14
+if [ ! -e /etc/nginx/conf.d ]; then
+    ln -s /etc/nginx/http.d /etc/nginx/conf.d
+fi
+
+# permissions
+chown -R abc:abc \
+    /config \
+    /var/lib/nginx \
+    /var/tmp/nginx
+chmod -R g+w \
+    /config/{conf,www}
+chmod -R 644 /etc/logrotate.d
+
+# remove lua bits from nginx.conf if not done before
+if ! grep -q '#Removed lua' /config/nginx/nginx.conf; then 
+    echo "Removing lua specific info from nginx.conf"
+    sed -i 's|\tlua_load_resty_core off;|\t#Removed lua. Do not remove this comment|g' /config/nginx/nginx.conf
+fi

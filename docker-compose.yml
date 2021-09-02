@@ -1,0 +1,15 @@
+version: "2.1"
+services:
+    nginx-auth:
+        build: .
+        container_name: nginx-auth
+        environment:
+            - PUID=1000
+            - PGID=1000
+            - TZ=Europe/London
+        volumes:
+            - ./config:/config
+        ports:
+            - 8080:80
+            #- 443:443
+        restart: unless-stopped
