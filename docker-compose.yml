@@ -2,7 +2,7 @@ version: "2.1"
 services:
     nginx-auth:
         build: .
-        container_name: nginx-auth
+        container_name: nginx-http-auth
         environment:
             - PUID=1000
             - PGID=1000

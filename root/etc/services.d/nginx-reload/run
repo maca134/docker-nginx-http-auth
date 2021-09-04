@@ -1,14 +1,28 @@
 #!/usr/bin/with-contenv bash
 
-WATCH_FILES=( \
+DEFAULT_WATCH=( \
     /config/conf/nginx.conf \
     /config/conf/sites.conf \
 )
 
+for i in ${DEFAULT_WATCH[@]}; do
+    if [ -f "${i}" ] || [ -d "${i}" ]; then
+        echo "${i}"
+        ACTIVE_WATCH="${ACTIVE_WATCH} ${i}"
+    fi
+done
+
+for i in $(echo "$WATCHLIST" | tr "|" " "); do
+    if [ -f "${i}" ] || [ -d "${i}" ]; then
+        echo "${i}"
+        ACTIVE_WATCH="${ACTIVE_WATCH} ${i}"
+    fi
+done
+
 function wait_for_changes {
     inotifywait -rq \
-        --event modify,move,create,delete \
-        ${WATCH_FILES}
+        --event close_write \
+        ${ACTIVE_WATCH}
 }
 
 while wait_for_changes; do
